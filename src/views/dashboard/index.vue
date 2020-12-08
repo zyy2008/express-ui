@@ -1,17 +1,24 @@
 <template>
   <el-card>
     <div slot="header" class="card-header">
-      <el-button
-        type="primary"
-        size="small"
-        @click="dialogTableVisible = true"
-      >Add</el-button>
+      <el-button type="primary" size="small" @click="handleAdd">Add</el-button>
     </div>
     <el-table :data="tableData" border height="800px">
       <el-table-column prop="name" label="Name" />
       <el-table-column prop="borough" label="Borough" />
       <el-table-column prop="cuisine" label="Cuisine" />
-      <el-table-column prop="photo" label="Photo" />
+      <el-table-column prop="photo" label="Photo">
+        <template slot-scope="{ row }">
+          <el-image
+            style="height: 30px"
+            :src="row.photo"
+            fit="contain"
+            v-if="row.photo != ''"
+            :preview-src-list="[row.photo]"
+          ></el-image>
+          <div style="height: 30px" v-else>-</div>
+        </template>
+      </el-table-column>
       <el-table-column label="Score">
         <template slot-scope="{ row }">
           <el-rate
@@ -23,26 +30,45 @@
           />
         </template>
       </el-table-column>
-      <el-table-column label="operate" width="200">
+      <el-table-column label="operate" width="260">
         <template slot-scope="scope">
-          <el-button size="mini" @click="handleEdit(scope.row)">Edit</el-button>
+          <el-button
+            size="mini"
+            @click="handleEdit(scope.row)"
+            :disabled="scope.row.user_id != userId"
+            >Edit</el-button
+          >
           <el-button
             size="mini"
             type="danger"
-            @click="handleDelete(scope.$index, scope.row)"
-          >Delete</el-button>
+            :disabled="scope.row.user_id != userId"
+            @click="handleDelete(scope.row)"
+            >Delete</el-button
+          >
+          <el-button
+            size="mini"
+            type="primary"
+            :disabled="scope.row.play"
+            @click="handleScore(scope.row)"
+            >Score</el-button
+          >
         </template>
       </el-table-column>
     </el-table>
     <el-dialog
-      :title="add ? 'cerate' : 'edit'"
+      :title="type == 1 ? (add ? 'cerate' : 'edit') : 'scoring'"
       :visible.sync="dialogTableVisible"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
       destroy-on-close
       @close="handleClose"
     >
-      <el-form ref="dynamicValidateForm" :model="form" label-width="100px">
+      <el-form
+        ref="dynamicValidateForm"
+        :model="form"
+        v-if="type == 1"
+        label-width="100px"
+      >
         <el-form-item
           label="Name:"
           prop="name"
@@ -70,11 +96,25 @@
             :on-success="handleAvatarSuccess"
             :http-request="httpRequest"
           >
-            <img v-if="imageUrl" width="400" :src="imageUrl" class="avatar">
+            <img
+              v-if="form.photo"
+              width="400"
+              :src="form.photo"
+              class="avatar"
+            />
             <i v-else class="el-icon-plus avatar-uploader-icon" />
           </el-upload>
         </el-form-item>
       </el-form>
+      <el-rate
+        v-model="score"
+        show-score
+        text-color="#ff9900"
+        score-template="{value}"
+        v-else
+        :max="10"
+      >
+      </el-rate>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogTableVisible = false">cancel</el-button>
         <el-button type="primary" @click="submitForm">ok</el-button>
@@ -84,75 +124,207 @@
 </template>
 
 <script>
-import { getInfo } from '@/api/user'
+import { getInfo, add, upd, del, addScore, getScore } from "@/api/user";
+import { getUserId } from "@/utils/auth";
 export default {
-  name: 'Dashboard',
+  name: "Dashboard",
   data() {
     return {
       tableData: [],
       dialogTableVisible: false,
       add: true,
-      imageUrl: '',
+      userId: getUserId(),
+      type: 1,
+      score: 0,
       form: {
-        name: '',
-        borough: '',
-        cuisine: '',
-        photo: '',
-        zipcode: '',
-        building: ''
-      }
-    }
+        name: "",
+        borough: "",
+        cuisine: "",
+        photo: "",
+        zipcode: "",
+        building: "",
+      },
+    };
   },
   mounted() {
-    this.getData()
+    this.getData();
   },
   methods: {
+    handleAdd() {
+      this.type = 1;
+      this.dialogTableVisible = true;
+      this.add = true;
+    },
     submitForm() {
-      this.$refs['dynamicValidateForm'].validate((valid) => {
-        if (valid) {
-        } else {
-          return false
-        }
-      })
+      if (this.type == 1) {
+        this.$refs["dynamicValidateForm"].validate((valid) => {
+          if (valid) {
+            if (this.add) {
+              add(this.form).then((res) => {
+                if (res.status == "ok") {
+                  this.$notify({
+                    message: "add successfully",
+                    type: "success",
+                  });
+                  this.getData();
+                  this.dialogTableVisible = false;
+                } else {
+                  this.$notify.error({
+                    message: "add failed",
+                  });
+                }
+              });
+            } else {
+              upd(this.form).then((res) => {
+                if (res.status == "ok") {
+                  this.$notify({
+                    message: "update successfully",
+                    type: "success",
+                  });
+                  this.getData();
+                  this.dialogTableVisible = false;
+                } else {
+                  this.$notify.error({
+                    message: "update failed",
+                  });
+                }
+              });
+            }
+          } else {
+            return false;
+          }
+        });
+      } else {
+        this.$emit("addScoe");
+      }
+    },
+    handleScore(row) {
+      this.type = 2;
+      this.dialogTableVisible = true;
+      this.$on("addScoe", () => {
+        addScore({
+          rest_id: row._id,
+          score: this.score,
+        }).then((res) => {
+          if (res.status == "ok") {
+            this.$notify({
+              message: "Scored successfully",
+              type: "success",
+            });
+            this.getData();
+            this.dialogTableVisible = false;
+          } else {
+            this.$notify.error({
+              message: "Scoring failed",
+            });
+          }
+        });
+      });
     },
     handleClose() {
-      this.$refs['dynamicValidateForm'].resetFields()
+      this.score = 0;
+      this.$refs["dynamicValidateForm"].resetFields();
     },
     httpRequest(a) {
       return new Promise((resolve, reject) => {
-        resolve(a)
-      })
+        resolve(a);
+      });
     },
     handleAvatarSuccess(res, file) {
-      this.imageUrl = URL.createObjectURL(file.raw)
+      const self = this;
+      var fileReader = new FileReader();
+      fileReader.readAsDataURL(file.raw);
+      fileReader.onload = function (fileLoadedEvent) {
+        var srcData = fileLoadedEvent.target.result; // <--- data: base64
+        self.form.photo = srcData;
+      };
     },
     beforeAvatarUpload(file) {
-      const isJPG = file.type === 'image/jpeg'
-      const isLt2M = file.size / 1024 / 1024 < 2
+      const isJPG = file.type === "image/jpeg";
+      const isLt2M = file.size / 1024 / 1024 < 2;
 
       if (!isJPG) {
-        this.$message.error('Upload pictures can only be in JPG format')
+        this.$message.error("Upload pictures can only be in JPG format");
       }
       if (!isLt2M) {
-        this.$message.error('Picture size cannot exceed 2 MB')
+        this.$message.error("Picture size cannot exceed 2 MB");
       }
-      return isJPG && isLt2M
+      return isJPG && isLt2M;
+    },
+    getScore() {
+      return new Promise((resolve) => {
+        getScore().then((res) => {
+          if (res.status == "ok") {
+            resolve(res.data);
+          } else {
+            resolve([]);
+          }
+        });
+      });
     },
     getData() {
-      getInfo().then((res) => {
-        if (res.status == 'ok') {
-          this.tableData = res.data
-        }
-      })
+      this.getScore().then((data) => {
+        getInfo().then((res) => {
+          if (res.status == "ok") {
+            this.tableData = res.data.map((item) => {
+              let find = data.filter(
+                (its) => its.rest_id == item._id && its.user_id == getUserId()
+              );
+              let findAll = data.filter((its) => its.rest_id == item._id);
+              let fraction = 0;
+              findAll.forEach((element) => {
+                fraction = fraction + element.score;
+              });
+              item.grades = fraction / findAll.length;
+              if (find.length == 0) {
+                item.play = false;
+              } else {
+                item.play = true;
+              }
+              return item;
+            });
+          } else {
+            this.tableData = [];
+          }
+        });
+      });
     },
     handleEdit(row) {
-      const copy = Object.assign({}, row)
-      this.form = copy
-      this.dialogTableVisible = true
+      this.type = 1;
+      this.add = false;
+      const copy = Object.assign({}, row);
+      this.form = copy;
+      this.dialogTableVisible = true;
     },
-    handleDelete() {}
-  }
-}
+    handleDelete(row) {
+      this.$confirm(
+        "This operation will permanently delete the file, do you want to continue",
+        "prompt",
+        {
+          confirmButtonText: "ok",
+          cancelButtonText: "cancel",
+          type: "warning",
+        }
+      )
+        .then(() => {
+          del(row._id).then((res) => {
+            if (res.status == "ok") {
+              this.$notify({
+                message: "delete successfully",
+                type: "success",
+              });
+              this.getData();
+            } else {
+              this.$notify.error({
+                message: "delete failed",
+              });
+            }
+          });
+        })
+        .catch(() => {});
+    },
+  },
+};
 </script>
 <style lang="scss" scoped>
 .card-header {

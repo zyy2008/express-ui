@@ -6,7 +6,9 @@ import {
 import {
   getToken,
   setToken,
-  removeToken
+  removeToken,
+  setUserId,
+  removeUserId
 } from '@/utils/auth'
 import router, {
   resetRouter
@@ -57,6 +59,7 @@ const actions = {
         } = response
         commit('SET_TOKEN', data.token)
         setToken(data.token)
+        setUserId(data.userId)
         resolve()
       }).catch(error => {
         reject(error)
@@ -112,6 +115,7 @@ const actions = {
       commit('SET_TOKEN', '')
       commit('SET_ROLES', [])
       removeToken()
+      removeUserId()
       resetRouter()
       resolve()
     })
@@ -124,6 +128,7 @@ const actions = {
     return new Promise(resolve => {
       commit('SET_TOKEN', '')
       commit('SET_ROLES', [])
+      removeUserId()
       removeToken()
       resolve()
     })

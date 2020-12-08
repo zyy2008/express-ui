@@ -8,10 +8,47 @@ export function login(data) {
   })
 }
 
-export function getInfo(token) {
+export function getInfo() {
   return request({
     url: '/restaurant/get',
     method: 'get'
+  })
+}
+
+export function add(data) {
+  return request({
+    url: '/restaurant/add',
+    method: 'post',
+    data
+  })
+}
+
+export function upd(data) {
+  return request({
+    url: '/restaurant/upd',
+    method: 'post',
+    data
+  })
+}
+
+export function addScore(data) {
+  return request({
+    url: '/scoring/add',
+    method: 'post',
+    data
+  })
+}
+export function getScore() {
+  return request({
+    url: '/scoring/get',
+    method: 'get'
+  })
+}
+
+export function del(id) {
+  return request({
+    url: `/restaurant/del/${id}`,
+    method: 'delete'
   })
 }
 
