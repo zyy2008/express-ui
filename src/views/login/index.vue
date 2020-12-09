@@ -63,11 +63,10 @@
           :loading="loading"
           type="primary"
           @click.native.prevent="handleLogin"
-          >Login</el-button
-        >
-        <el-button @click.native.prevent="dialogFormVisible = true"
-          >Registered</el-button
-        >
+        >Login</el-button>
+        <el-button
+          @click.native.prevent="dialogFormVisible = true"
+        >Registered</el-button>
       </div>
 
       <div style="position: relative">
@@ -123,100 +122,100 @@
 </template>
 
 <script>
-import { validUsername } from "@/utils/validate";
-import SocialSign from "./components/SocialSignin";
-import { addUser } from "@/api/user";
+import { validUsername } from '@/utils/validate'
+import SocialSign from './components/SocialSignin'
+import { addUser } from '@/api/user'
 
 export default {
-  name: "Login",
+  name: 'Login',
   components: { SocialSign },
   data() {
     const validateUsername = (rule, value, callback) => {
-      if (value == "") {
-        callback(new Error("Please enter the correct user name"));
+      if (value == '') {
+        callback(new Error('Please enter the correct user name'))
       } else {
-        callback();
+        callback()
       }
-    };
+    }
     const validatePassword = (rule, value, callback) => {
       if (value.length < 6) {
-        callback(new Error("The password can not be less than 6 digits"));
+        callback(new Error('The password can not be less than 6 digits'))
       } else {
-        callback();
+        callback()
       }
-    };
+    }
     const regPassword = (rule, value, callback) => {
       if (value.length < 6) {
-        callback(new Error("Please enter at least six passwords"));
+        callback(new Error('Please enter at least six passwords'))
       } else {
-        callback();
+        callback()
       }
-    };
+    }
     const regUserName = (rule, value, callback) => {
-      if (value == "") {
-        callback(new Error("please enter user name"));
+      if (value == '') {
+        callback(new Error('please enter user name'))
       } else {
-        callback();
+        callback()
       }
-    };
+    }
     const regPwdConfirm = (rule, value, callback) => {
-      if (value != this.form.password || this.form.password == "") {
-        callback(new Error("Please keep the same password"));
+      if (value != this.form.password || this.form.password == '') {
+        callback(new Error('Please keep the same password'))
       } else {
-        callback();
+        callback()
       }
-    };
+    }
     return {
       dialogFormVisible: false,
       form: {
-        username: "",
-        password: "",
-        password_confirm: "",
+        username: '',
+        password: '',
+        password_confirm: ''
       },
       loginForm: {
-        username: "",
-        password: "",
+        username: '',
+        password: ''
       },
       reginRules: {
-        username: [{ required: true, trigger: "blur", validator: regUserName }],
-        password: [{ required: true, trigger: "blur", validator: regPassword }],
+        username: [{ required: true, trigger: 'blur', validator: regUserName }],
+        password: [{ required: true, trigger: 'blur', validator: regPassword }],
         password_confirm: [
-          { required: true, trigger: "blur", validator: regPwdConfirm },
-        ],
+          { required: true, trigger: 'blur', validator: regPwdConfirm }
+        ]
       },
       loginRules: {
         username: [
-          { required: true, trigger: "blur", validator: validateUsername },
-        ],
+          { required: true, trigger: 'blur', validator: validateUsername }
+        ]
       },
-      passwordType: "password",
+      passwordType: 'password',
       capsTooltip: false,
       loading: false,
       showDialog: false,
       redirect: undefined,
-      otherQuery: {},
-    };
+      otherQuery: {}
+    }
   },
   watch: {
     $route: {
-      handler: function (route) {
-        const query = route.query;
+      handler: function(route) {
+        const query = route.query
         if (query) {
-          this.redirect = query.redirect;
-          this.otherQuery = this.getOtherQuery(query);
+          this.redirect = query.redirect
+          this.otherQuery = this.getOtherQuery(query)
         }
       },
-      immediate: true,
-    },
+      immediate: true
+    }
   },
   created() {
     // window.addEventListener('storage', this.afterQRScan)
   },
   mounted() {
-    if (this.loginForm.username === "") {
-      this.$refs.username.focus();
-    } else if (this.loginForm.password === "") {
-      this.$refs.password.focus();
+    if (this.loginForm.username === '') {
+      this.$refs.username.focus()
+    } else if (this.loginForm.password === '') {
+      this.$refs.password.focus()
     }
   },
   destroyed() {
@@ -224,75 +223,75 @@ export default {
   },
   methods: {
     handleClose() {
-      this.$refs["register"].resetFields();
+      this.$refs['register'].resetFields()
     },
     handleSubmit() {
-      this.$refs["register"].validate((valid) => {
+      this.$refs['register'].validate((valid) => {
         if (valid) {
           addUser(this.form).then((res) => {
-            if (res.status == "ok") {
+            if (res.status == 'ok') {
               this.$notify({
-                message: "registration success",
-                type: "success",
-              });
-              this.dialogFormVisible = false;
+                message: 'registration success',
+                type: 'success'
+              })
+              this.dialogFormVisible = false
             } else {
               this.$notify({
                 message: res.message,
-                type: "warning",
-              });
+                type: 'warning'
+              })
             }
-          });
+          })
         } else {
-          console.log("error submit!!");
-          return false;
+          console.log('error submit!!')
+          return false
         }
-      });
+      })
     },
     checkCapslock(e) {
-      const { key } = e;
-      this.capsTooltip = key && key.length === 1 && key >= "A" && key <= "Z";
+      const { key } = e
+      this.capsTooltip = key && key.length === 1 && key >= 'A' && key <= 'Z'
     },
     showPwd() {
-      if (this.passwordType === "password") {
-        this.passwordType = "";
+      if (this.passwordType === 'password') {
+        this.passwordType = ''
       } else {
-        this.passwordType = "password";
+        this.passwordType = 'password'
       }
       this.$nextTick(() => {
-        this.$refs.password.focus();
-      });
+        this.$refs.password.focus()
+      })
     },
     handleLogin() {
       this.$refs.loginForm.validate((valid) => {
         if (valid) {
-          this.loading = true;
+          this.loading = true
           this.$store
-            .dispatch("user/login", this.loginForm)
+            .dispatch('user/login', this.loginForm)
             .then(() => {
               this.$router.push({
-                path: this.redirect || "/",
-                query: this.otherQuery,
-              });
-              this.loading = false;
+                path: this.redirect || '/',
+                query: this.otherQuery
+              })
+              this.loading = false
             })
             .catch(() => {
-              this.loading = false;
-            });
+              this.loading = false
+            })
         } else {
-          console.log("error submit!!");
-          return false;
+          console.log('error submit!!')
+          return false
         }
-      });
+      })
     },
     getOtherQuery(query) {
       return Object.keys(query).reduce((acc, cur) => {
-        if (cur !== "redirect") {
-          acc[cur] = query[cur];
+        if (cur !== 'redirect') {
+          acc[cur] = query[cur]
         }
-        return acc;
-      }, {});
-    },
+        return acc
+      }, {})
+    }
     // afterQRScan() {
     //   if (e.key === 'x-admin-oauth-code') {
     //     const code = getQueryObject(e.newValue)
@@ -311,8 +310,8 @@ export default {
     //     }
     //   }
     // }
-  },
-};
+  }
+}
 </script>
 
 <style lang="scss">
